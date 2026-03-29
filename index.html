@@ -252,11 +252,11 @@
       z-index: 15;
     }
 
-    /* ===== お部屋シーン（建物入室時） ===== */
+    /* ===== お部屋シーン（画面全体を覆うfixed overlay） ===== */
     #room-scene {
-      position: absolute;
+      position: fixed;
       inset: 0;
-      z-index: 40;
+      z-index: 200;
       display: none;
       overflow: hidden;
     }
@@ -265,17 +265,17 @@
     #room-bg {
       position: absolute;
       inset: 0;
-      /* ★ 素材差し替え: background-image: url('images/bg_lobby.png'); background-size: cover; */
-      transition: background 0.3s;
+      background-size: cover;
+      background-position: center;
     }
 
-    /* りこさんイラスト（デスクトップ: 左端） */
+    /* りこさんイラスト */
     #room-chara {
       position: absolute;
       left: 0;
-      bottom: 120px;
-      width: 220px;
-      height: 320px;
+      bottom: 130px;
+      width: 240px;
+      height: 340px;
       display: flex;
       align-items: flex-end;
       justify-content: center;
@@ -290,7 +290,7 @@
       object-position: bottom center;
     }
 
-    /* テキストボックス（デスクトップ: 下部） */
+    /* テキストボックス */
     #room-textbox {
       position: absolute;
       bottom: 0;
@@ -299,21 +299,29 @@
       background: rgba(15, 20, 50, 0.93);
       border-top: 3px solid #FFD700;
       padding: 14px 24px 16px 24px;
-      min-height: 120px;
+      min-height: 130px;
     }
 
-    /* ===== モバイル用お部屋レイアウト: イラスト上・テキスト下 ===== */
-    #room-scene.mobile-room #room-chara {
-      left: 50%;
-      bottom: 190px;
-      transform: translateX(-50%);
-      width: 260px;
-      height: 300px;
-    }
+    /* ===== モバイル: イラスト上・テキスト下 ===== */
+    @media (max-width: 600px), (max-height: 500px) {
+      #room-chara {
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: auto;
+        top: 20px;
+        width: 50vw;
+        height: 45vh;
+      }
 
-    #room-scene.mobile-room #room-textbox {
-      min-height: 190px;
-      padding: 12px 20px 40px;
+      #room-textbox {
+        min-height: 38vh;
+        padding: 12px 16px 50px;
+        font-size: 16px;
+      }
+
+      #room-textbox-name { font-size: 16px; }
+      #room-textbox-text { font-size: 15px; line-height: 1.7; }
+      #room-textbox-next { font-size: 13px; }
     }
 
     #room-textbox-name {
@@ -487,24 +495,6 @@
   </div>
 
   <!-- お部屋シーン（建物入室時のフルスクリーン表示） -->
-  <div id="room-scene">
-    <!-- 背景 -->
-    <!-- ★ 素材差し替え: #room-bg の background-image をエリアごとに設定 -->
-    <div id="room-bg"></div>
-    <!-- りこさんイラスト（左端） -->
-    <!-- ★ 素材差し替え: images/talk_riko.png を配置 -->
-    <div id="room-chara">
-      <img src="images/talk_riko.png" alt="りこさん"
-           onerror="this.style.display='none'; this.parentElement.textContent='👩'">
-    </div>
-    <!-- テキストボックス -->
-    <div id="room-textbox">
-      <div id="room-textbox-name">りこさん</div>
-      <div id="room-textbox-text"></div>
-      <div id="room-textbox-next">▼ Enter / クリックで次へ</div>
-    </div>
-  </div>
-
   <!-- タイトル画面 -->
   <div id="title-screen">
     <h1>🏘 AIらぼ サロンツアー</h1>
@@ -523,6 +513,21 @@
       自己紹介を書いてみてね♪<br><br>
       一緒に楽しんでいきましょう！
     </p>
+  </div>
+</div>
+
+<!-- お部屋シーン（game-wrapperの外・画面全体を覆う） -->
+<div id="room-scene">
+  <div id="room-bg"></div>
+  <!-- ★ 素材差し替え: images/talk_riko.png -->
+  <div id="room-chara">
+    <img src="images/talk_riko.png" alt="りこさん"
+         onerror="this.style.display='none'; this.parentElement.textContent='👩'">
+  </div>
+  <div id="room-textbox">
+    <div id="room-textbox-name">りこさん</div>
+    <div id="room-textbox-text"></div>
+    <div id="room-textbox-next">▼ タップ / Enterで次へ</div>
   </div>
 </div>
 
@@ -834,11 +839,10 @@ function scaleGame() {
 scaleGame();
 window.addEventListener('resize', scaleGame);
 
-// モバイルのみDパッド・決定ボタン・お部屋レイアウト変更
+// モバイルのみDパッド・決定ボタンを表示
 if (isMobile) {
   dpadEl.style.display   = 'block';
   enterBtn.style.display = 'block';
-  roomScene.classList.add('mobile-room');
 }
 
 // Dパッドのタッチ操作
