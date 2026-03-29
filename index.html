@@ -822,15 +822,12 @@ function scaleGame() {
   const scale  = Math.min(scaleX, scaleY, 1);
   document.getElementById('game-wrapper').style.transform = `scale(${scale})`;
 
-  // モバイルでは縮小率の逆数で文字を拡大して可読性を確保
+  // モバイルでは縮小率の逆数でゲーム内文字（マップ上）を拡大して可読性を確保
+  // ※ room-sceneはposition:fixedでscale外なので補正不要
   if (isMobile && scale < 1) {
     const inv = 1 / scale;
-    document.getElementById('room-textbox-text').style.fontSize  = Math.round(14 * inv * 1.15) + 'px';
-    document.getElementById('room-textbox-name').style.fontSize  = Math.round(13 * inv * 1.15) + 'px';
-    document.getElementById('room-textbox-next').style.fontSize  = Math.round(12 * inv * 1.15) + 'px';
-    document.getElementById('counter').style.fontSize            = Math.round(12 * inv * 1.15) + 'px';
-    document.getElementById('enter-hint').style.fontSize         = Math.round(12 * inv * 1.15) + 'px';
-    // 建物ラベルは全要素に適用
+    document.getElementById('counter').style.fontSize    = Math.round(12 * inv * 1.15) + 'px';
+    document.getElementById('enter-hint').style.fontSize = Math.round(12 * inv * 1.15) + 'px';
     document.querySelectorAll('.building-label').forEach(el => {
       el.style.fontSize = Math.round(10 * inv * 1.1) + 'px';
     });
