@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIらぼ サロンツアー</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    }
+
+    #game-wrapper {
+      position: relative;
+      width: 800px;
+      height: 560px;
+    }
+
+    /* ===== マップ ===== */
+    #map {
+      width: 800px;
+      height: 560px;
+      background: #5a8a3c;
+      position: relative;
+      overflow: hidden;
+      border: 4px solid #2d5a1b;
+      border-radius: 4px;
+    }
+
+    /* フィールド背景画像 */
+    #map::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url('images/field_bg.png');
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* ===== 建物 ===== */
+    .building {
+      position: absolute;
+      width: 88px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .building-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 4px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      border: 3px solid rgba(255,255,255,0.3);
+      position: relative;
+      /* ★ 素材差し替え: background-imageを設定してください */
+      /* background-image: url('images/building_lobby.png'); */
+      background-size: cover;
+    }
+
+    .building-label {
+      font-size: 10px;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+      font-weight: bold;
+      line-height: 1.3;
+      word-break: keep-all;
+    }
+
+    .building.visited .building-icon::after {
+      content: '✓';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #4CAF50;
+      color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #fff;
+    }
+
+    /* 各建物の色 */
+    .b-lobby     .building-icon { background-color: #E8A838; }
+    .b-lesson    .building-icon { background-color: #4FC3F7; }
+    .b-newmember .building-icon { background-color: #81C784; }
+    .b-intro     .building-icon { background-color: #F06292; }
+    .b-relax     .building-icon { background-color: #FFB74D; }
+    .b-work      .building-icon { background-color: #9575CD; }
+    .b-result    .building-icon { background-color: #FF8A65; }
+    .b-moku      .building-icon { background-color: #4DD0E1; }
+    .b-club      .building-icon { background-color: #AED581; }
+    .b-square    .building-icon { background-color: #78909C; }
+
+    /* 広場（ロック中） */
+    .b-square.locked .building-icon {
+      background-color: #546E7A;
+      filter: grayscale(0.5);
+    }
+    .b-square.locked .building-label {
+      color: #aaa;
+    }
+
+    /* ===== プレイヤー（りこさん） ===== */
+    #player {
+      position: absolute;
+      width: 72px;
+      height: 96px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      transition: left 0.08s, top 0.08s;
+    }
+
+    .riko-sprite {
+      display: none;
+      width: 72px;
+      height: 96px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      position: absolute;
+      top: 0; left: 0;
+    }
+
+    .riko-sprite.active { display: block; }
+
+    /* ===== 「Enterで入る」ヒント ===== */
+    #enter-hint {
+      position: absolute;
+      background: rgba(0,0,0,0.75);
+      color: #FFD700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 20;
+      display: none;
+      white-space: nowrap;
+      border: 1px solid #FFD700;
+    }
+
+    /* ===== 訪問カウンター ===== */
+    #counter {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.6);
+      color: #FFD700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 15;
+    }
+
+    /* ===== 操作説明 ===== */
+    #controls {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.5);
+      color: #aaa;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      z-index: 15;
+    }
+
+    /* ===== お部屋シーン（建物入室時） ===== */
+    #room-scene {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      overflow: hidden;
+    }
+
+    /* 背景 */
+    #room-bg {
+      position: absolute;
+      inset: 0;
+      /* ★ 素材差し替え: background-image: url('images/bg_lobby.png'); background-size: cover; */
+      transition: background 0.3s;
+    }
+
+    /* りこさんイラスト（左端） */
+    #room-chara {
+      position: absolute;
+      left: 0;
+      bottom: 120px; /* テキストボックスの高さ分上げる */
+      width: 220px;
+      height: 320px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      font-size: 140px;
+      filter: drop-shadow(0 4px 16px rgba(0,0,0,0.6));
+    }
+
+    #room-chara img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: bottom center;
+    }
+
+    /* テキストボックス（下部） */
+    #room-textbox {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(15, 20, 50, 0.93);
+      border-top: 3px solid #FFD700;
+      padding: 14px 24px 16px 24px;
+      min-height: 120px;
+    }
+
+    #room-textbox-name {
+      color: #FFD700;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    #room-textbox-text {
+      color: #eee;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    #room-textbox-next {
+      position: absolute;
+      bottom: 12px;
+      right: 18px;
+      color: #FFD700;
+      font-size: 12px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ===== タイトル画面 ===== */
+    #title-screen {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1a1a4e, #0d2b45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      color: #fff;
+    }
+
+    #title-screen h1 {
+      font-size: 28px;
+      color: #FFD700;
+      text-shadow: 2px 2px 8px rgba(255,215,0,0.5);
+      margin-bottom: 8px;
+    }
+
+    #title-screen p {
+      color: #aac4ff;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    #start-btn {
+      background: #FFD700;
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 40px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #start-btn:hover { background: #FFC200; }
+
+    /* ===== エンディング ===== */
+    #ending-screen {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1a3a1a, #2d5a2d);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      color: #fff;
+      display: none;
+    }
+
+    #ending-screen h2 {
+      font-size: 26px;
+      color: #FFD700;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    #ending-screen p {
+      font-size: 14px;
+      color: #ccffcc;
+      text-align: center;
+      line-height: 1.8;
+      max-width: 500px;
+    }
+  </style>
+</head>
+<body>
+<div id="game-wrapper">
+  <div id="map">
+    <!-- 建物 -->
+    <!-- ★ data-id: エリアID  data-x,data-y: 建物の中心座標 -->
+    <div class="building b-lobby"     id="b-lobby"     data-id="lobby"     style="left:30px; top:60px;"    data-cx="74" data-cy="124">
+      <div class="building-icon">🏠</div>
+      <div class="building-label">らぼリビング</div>
+    </div>
+    <div class="building b-lesson"    id="b-lesson"    data-id="lesson"    style="left:200px; top:40px;"   data-cx="244" data-cy="104">
+      <div class="building-icon">📚</div>
+      <div class="building-label">はじめてのaiレッスン</div>
+    </div>
+    <div class="building b-relax"     id="b-relax"     data-id="relax"     style="left:460px; top:40px;"   data-cx="504" data-cy="104">
+      <div class="building-icon">☕</div>
+      <div class="building-label">息抜きルーム</div>
+    </div>
+    <div class="building b-intro"     id="b-intro"     data-id="intro"     style="left:630px; top:60px;"   data-cx="674" data-cy="124">
+      <div class="building-icon">📝</div>
+      <div class="building-label">自己紹介</div>
+    </div>
+    <div class="building b-work"      id="b-work"      data-id="work"      style="left:30px; top:220px;"   data-cx="74" data-cy="284">
+      <div class="building-icon">📊</div>
+      <div class="building-label">作業報告</div>
+    </div>
+    <div class="building b-result"    id="b-result"    data-id="result"    style="left:630px; top:220px;"  data-cx="674" data-cy="284">
+      <div class="building-icon">🏆</div>
+      <div class="building-label">成果報告部屋</div>
+    </div>
+    <div class="building b-newmember" id="b-newmember" data-id="newmember" style="left:30px; top:370px;"   data-cx="74" data-cy="434">
+      <div class="building-icon">🌱</div>
+      <div class="building-label">新メンバーさんの部屋</div>
+    </div>
+    <div class="building b-moku"      id="b-moku"      data-id="moku"      style="left:630px; top:370px;"  data-cx="674" data-cy="434">
+      <div class="building-icon">💻</div>
+      <div class="building-label">もくもくチャット</div>
+    </div>
+    <div class="building b-club"      id="b-club"      data-id="club"      style="left:330px; top:450px;"  data-cx="374" data-cy="514">
+      <div class="building-icon">⭐</div>
+      <div class="building-label">部活エリア</div>
+    </div>
+
+    <!-- 中央広場（ロック） -->
+    <div class="building b-square locked" id="b-square" data-id="square" style="left:330px; top:220px;" data-cx="374" data-cy="284">
+      <div class="building-icon">🔒</div>
+      <div class="building-label">中央広場<br>（全員訪問後解放）</div>
+    </div>
+
+    <!-- プレイヤー（りこさん）フレームPNGで事前読み込み -->
+    <div id="player">
+      <img class="riko-sprite active" id="player-sprite" src="images/down_riko_1.png" alt="">
+    </div>
+    <!-- フレーム先読み用（非表示） -->
+    <div style="display:none">
+      <img id="pre-down-1"  src="images/down_riko_1.png">
+      <img id="pre-down-2"  src="images/down_riko_2.png">
+      <img id="pre-up-1"    src="images/up_riko_1.png">
+      <img id="pre-up-2"    src="images/up_riko_2.png">
+      <img id="pre-left-1"  src="images/left_riko_1.png">
+      <img id="pre-left-2"  src="images/left_riko_2.png">
+      <img id="pre-right-1" src="images/right_riko_1.png">
+      <img id="pre-right-2" src="images/right_riko_2.png">
+    </div>
+
+    <!-- Enterヒント -->
+    <div id="enter-hint">Enterで入る</div>
+
+    <!-- カウンター -->
+    <div id="counter">訪問: 0 / 9</div>
+
+    <!-- 操作説明 -->
+    <div id="controls">矢印キーで移動</div>
+  </div>
+
+  <!-- お部屋シーン（建物入室時のフルスクリーン表示） -->
+  <div id="room-scene">
+    <!-- 背景 -->
+    <!-- ★ 素材差し替え: #room-bg の background-image をエリアごとに設定 -->
+    <div id="room-bg"></div>
+    <!-- りこさんイラスト（左端） -->
+    <!-- ★ 素材差し替え: images/talk_riko.png を配置 -->
+    <div id="room-chara">
+      <img src="images/talk_riko.png" alt="りこさん"
+           onerror="this.style.display='none'; this.parentElement.textContent='👩'">
+    </div>
+    <!-- テキストボックス -->
+    <div id="room-textbox">
+      <div id="room-textbox-name">りこさん</div>
+      <div id="room-textbox-text"></div>
+      <div id="room-textbox-next">▼ Enter / クリックで次へ</div>
+    </div>
+  </div>
+
+  <!-- タイトル画面 -->
+  <div id="title-screen">
+    <h1>🏘 AIらぼ サロンツアー</h1>
+    <p>りこさんと一緒に、AIらぼの村を探検しよう！</p>
+    <button id="start-btn">スタート</button>
+  </div>
+
+  <!-- エンディング画面 -->
+  <div id="ending-screen">
+    <h2>🎉 ようこそ、AIらぼへ！</h2>
+    <p>
+      これで、AIらぼの全エリアを見学できたね。<br><br>
+      ここは、AI初心者のあなたが安心して<br>
+      学んだり、発信したり、仲間と繋がれる場所。<br><br>
+      まずは気軽に挨拶スタンプを押したり、<br>
+      自己紹介を書いてみてね♪<br><br>
+      一緒に楽しんでいきましょう！
+    </p>
+  </div>
+</div>
+
+<script>
+// ===== 設定 =====
+const PLAYER_SPEED = 3;
+const DETECT_RADIUS = 80;
+const MAP_W = 800;
+const MAP_H = 560;
+
+// ===== エリアデータ =====
+// bgColor: 背景のプレースホルダーカラー（★ 素材差し替え時は background-image を使用）
+const AREAS = {
+  lobby: {
+    name: 'らぼリビング',
+    bgImage: 'images/bg_lobby.png',
+    text: 'ここが私たちのリビングよ♪ 毎日のあいさつや全体のお知らせはここに来るの。新しい仲間が入ったときも、ここでお知らせが届くよ。気軽に挨拶スタンプを押してみてね！'
+  },
+  lesson: {
+    name: 'はじめてのaiレッスン',
+    bgImage: 'images/bg_lesson.png',
+    text: 'AI使うの初めて！って人は、まずここに来てね。AIとの基本的な会話にチャレンジできるお題を用意してるから、怖くないよ。一緒にやってみよう！'
+  },
+  relax: {
+    name: '息抜きルーム',
+    bgImage: 'images/bg_relax.png',
+    text: 'ここはなんでもありのカオスな部屋よ（笑）アニメの話、日常のこと、AIと関係なくてもOK！いきなり有益な情報が飛んでくることもあるよ。下の「おすすめガジェット紹介」スレッドでは、パソコンや周辺機器に迷ったとき、ここに書き込んでみてね！'
+  },
+  intro: {
+    name: '自己紹介',
+    bgImage: 'images/bg_intro.png',
+    text: 'みんなの自己紹介が並んでいるお部屋。ぜひあなたも書いてみてね！読んでいるだけでも、どんなメンバーがいるかわかって楽しいよ。'
+  },
+  work: {
+    name: '作業報告',
+    bgImage: 'images/bg_work.png',
+    text: '副業・発信活動など、毎日の作業報告のお部屋。誰でも投稿OK！見てるだけでも「みんな動いてる！」ってモチベになるよ。'
+  },
+  result: {
+    name: '成果報告部屋',
+    bgImage: 'images/bg_result.png',
+    text: '月ごとの成果報告のお部屋。毎月MVPが発表されて、MVPにはりことのミニ個別相談が付いてくるよ♪ 大きな成果じゃなくていいから、ぜひ投稿してみてね！'
+  },
+  newmember: {
+    name: '新メンバーさんの部屋',
+    bgImage: 'images/bg_newmember.png',
+    text: '入ったばかりの人が多いお部屋よ。わからないことや気になることは、遠慮なくここで聞いてみてね。みんな通ってきた道だから、温かく答えてくれるよ。'
+  },
+  moku: {
+    name: 'もくもくチャット',
+    bgImage: 'images/bg_moku.png',
+    text: '作業に集中するためのお部屋。りこもよくここにいるから、タイミングが合えば気軽に相談してみてね。'
+  },
+  club: {
+    name: '部活エリア',
+    bgImage: 'images/bg_club.png',
+    text: '音声配信部・udemy部・筋トレ部・読書部・ちびキャラ部——それぞれの仲間が活動報告や相談をしてるよ。Udemy部では講座を作りたい人向けの相談会もあって、「作ってみたい！」って宣言するとあることが起きるんだよね（ニヤリ）'
+  },
+  square: {
+    name: '中央広場',
+    bgImage: 'images/bg_square.png',
+    text: 'すごい！全部のエリアを回ってくれたんだね。ありがとう！ここが私たちのAIらぼの中心地、中央広場よ。これからもここで一緒に学んで、発信して、楽しんでいこう♪'
+  }
+};
+
+const NORMAL_AREAS = ['lobby','lesson','relax','intro','work','result','newmember','moku','club'];
+
+// ===== 状態 =====
+let player = { x: 380, y: 290 };
+let keys = {};
+let visitedAreas = new Set();
+let dialogOpen = false;
+let currentArea = null;
+let nearArea = null;
+let gameStarted = false;
+let lastDir = 'dawn'; // dawn / up / left / right
+
+// ===== フレームアニメーション設定 =====
+const FRAME_INTERVAL = 240; // ms（小さくするほど速い）
+const FRAMES = {
+  dawn:  ['images/down_riko_1.png',  'images/down_riko_2.png'],
+  up:    ['images/up_riko_1.png',    'images/up_riko_2.png'],
+  left:  ['images/left_riko_1.png',  'images/left_riko_2.png'],
+  right: ['images/right_riko_1.png', 'images/right_riko_2.png']
+};
+
+// ===== DOM =====
+const playerEl = document.getElementById('player');
+const hintEl = document.getElementById('enter-hint');
+const counterEl = document.getElementById('counter');
+const titleScreen = document.getElementById('title-screen');
+const endingScreen = document.getElementById('ending-screen');
+const squareEl = document.getElementById('b-square');
+
+const roomScene = document.getElementById('room-scene');
+const roomBg = document.getElementById('room-bg');
+const roomTextEl = document.getElementById('room-textbox-text');
+
+// ===== 建物データをDOMから取得 =====
+function getBuildings() {
+  return Array.from(document.querySelectorAll('.building')).map(el => ({
+    id: el.dataset.id,
+    cx: parseInt(el.dataset.cx),
+    cy: parseInt(el.dataset.cy),
+    el: el
+  }));
+}
+
+// ===== 距離計算 =====
+function dist(ax, ay, bx, by) {
+  return Math.sqrt((ax - bx) ** 2 + (ay - by) ** 2);
+}
+
+// ===== 最近の建物を取得 =====
+function getNearestBuilding() {
+  const buildings = getBuildings();
+  let nearest = null;
+  let minDist = DETECT_RADIUS;
+  for (const b of buildings) {
+    if (b.id === 'square' && !isSquareUnlocked()) continue;
+    const d = dist(player.x, player.y, b.cx, b.cy);
+    if (d < minDist) {
+      minDist = d;
+      nearest = b;
+    }
+  }
+  return nearest;
+}
+
+function isSquareUnlocked() {
+  return NORMAL_AREAS.every(id => visitedAreas.has(id));
+}
+
+// ===== プレイヤー描画 =====
+function renderPlayer() {
+  playerEl.style.left = (player.x - 36) + 'px';
+  playerEl.style.top  = (player.y - 48) + 'px';
+}
+
+// ===== フレームアニメーション =====
+const spriteEl = document.getElementById('player-sprite');
+let frameIndex = 0;
+let frameTimer = null;
+let isMoving = false;
+
+function startFrameLoop() {
+  if (frameTimer) return;
+  frameTimer = setInterval(() => {
+    frameIndex = (frameIndex + 1) % 2;
+    spriteEl.src = FRAMES[lastDir][frameIndex];
+  }, FRAME_INTERVAL);
+}
+
+function stopFrameLoop() {
+  clearInterval(frameTimer);
+  frameTimer = null;
+  frameIndex = 0;
+  spriteEl.src = FRAMES[lastDir][0]; // 静止時はフレーム1
+}
+
+function setPlayerDir(dir) {
+  if (dir === lastDir) return;
+  lastDir = dir;
+  frameIndex = 0;
+  spriteEl.src = FRAMES[lastDir][0];
+}
+
+// ===== ヒント表示 =====
+function updateHint(near) {
+  if (near && !dialogOpen) {
+    hintEl.style.display = 'block';
+    hintEl.style.left = (player.x - 40) + 'px';
+    hintEl.style.top = (player.y - 44) + 'px';
+  } else {
+    hintEl.style.display = 'none';
+  }
+}
+
+// ===== お部屋シーンを開く =====
+function openDialog(areaId) {
+  const area = AREAS[areaId];
+  if (!area) return;
+  dialogOpen = true;
+  currentArea = areaId;
+
+  // 背景画像を設定
+  roomBg.style.background = '';
+  roomBg.style.backgroundImage = `url('${area.bgImage}')`;
+  roomBg.style.backgroundSize = 'cover';
+  roomBg.style.backgroundPosition = 'center';
+
+  // テキストをセット
+  roomTextEl.textContent = area.text;
+
+  // シーンを表示
+  roomScene.style.display = 'block';
+  hintEl.style.display = 'none';
+}
+
+// ===== お部屋シーンを閉じる =====
+function closeDialog() {
+  if (!dialogOpen) return;
+  roomScene.style.display = 'none';
+  dialogOpen = false;
+
+  // 訪問済みに追加
+  if (currentArea && currentArea !== 'square') {
+    visitedAreas.add(currentArea);
+    const bEl = document.getElementById('b-' + currentArea);
+    if (bEl) bEl.classList.add('visited');
+    counterEl.textContent = `訪問: ${visitedAreas.size} / 9`;
+  }
+
+  // 広場解放チェック
+  if (isSquareUnlocked()) {
+    squareEl.classList.remove('locked');
+    squareEl.querySelector('.building-icon').textContent = '🌟';
+    squareEl.querySelector('.building-label').textContent = '中央広場';
+    // ロック解除直後にnearAreaを即更新（プレイヤーが近くにいればヒントを即表示）
+    nearArea = getNearestBuilding();
+    updateHint(nearArea);
+  }
+
+  // エンディングチェック
+  if (currentArea === 'square') {
+    setTimeout(() => {
+      endingScreen.style.display = 'flex';
+    }, 300);
+  }
+
+  currentArea = null;
+}
+
+// ===== キー入力 =====
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if ((e.key === 'Enter' || e.key === ' ') && gameStarted) {
+    if (dialogOpen) {
+      closeDialog();
+    } else if (nearArea) {
+      openDialog(nearArea.id);
+    }
+    e.preventDefault();
+  }
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// お部屋シーンクリック
+roomScene.addEventListener('click', () => { if (dialogOpen) closeDialog(); });
+
+// スタートボタン
+document.getElementById('start-btn').addEventListener('click', () => {
+  titleScreen.style.display = 'none';
+  gameStarted = true;
+  renderPlayer();
+  loop();
+});
+
+// エンディング画面クリック（再度クリックでリセット可能）
+endingScreen.addEventListener('click', () => {
+  endingScreen.style.display = 'none';
+});
+
+// ===== ゲームループ =====
+function loop() {
+  if (!dialogOpen && gameStarted) {
+    let dx = 0, dy = 0;
+    if (keys['ArrowLeft']  || keys['a']) dx -= PLAYER_SPEED;
+    if (keys['ArrowRight'] || keys['d']) dx += PLAYER_SPEED;
+    if (keys['ArrowUp']    || keys['w']) dy -= PLAYER_SPEED;
+    if (keys['ArrowDown']  || keys['s']) dy += PLAYER_SPEED;
+
+    const moving = dx !== 0 || dy !== 0;
+
+    // 移動方向に合わせてフレーム切り替え（斜め入力は縦優先）
+    if (dy > 0) setPlayerDir('dawn');
+    else if (dy < 0) setPlayerDir('up');
+    else if (dx < 0) setPlayerDir('left');
+    else if (dx > 0) setPlayerDir('right');
+
+    // 移動中はアニメON、停止時はOFF
+    if (moving && !isMoving) { isMoving = true;  startFrameLoop(); }
+    if (!moving && isMoving)  { isMoving = false; stopFrameLoop();  }
+
+    player.x = Math.max(16, Math.min(MAP_W - 16, player.x + dx));
+    player.y = Math.max(16, Math.min(MAP_H - 16, player.y + dy));
+
+    renderPlayer();
+    nearArea = getNearestBuilding();
+    updateHint(nearArea);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
