@@ -269,11 +269,11 @@
       transition: background 0.3s;
     }
 
-    /* りこさんイラスト（左端） */
+    /* りこさんイラスト（デスクトップ: 左端） */
     #room-chara {
       position: absolute;
       left: 0;
-      bottom: 120px; /* テキストボックスの高さ分上げる */
+      bottom: 120px;
       width: 220px;
       height: 320px;
       display: flex;
@@ -290,7 +290,7 @@
       object-position: bottom center;
     }
 
-    /* テキストボックス（下部） */
+    /* テキストボックス（デスクトップ: 下部） */
     #room-textbox {
       position: absolute;
       bottom: 0;
@@ -300,6 +300,20 @@
       border-top: 3px solid #FFD700;
       padding: 14px 24px 16px 24px;
       min-height: 120px;
+    }
+
+    /* ===== モバイル用お部屋レイアウト: イラスト上・テキスト下 ===== */
+    #room-scene.mobile-room #room-chara {
+      left: 50%;
+      bottom: 190px;
+      transform: translateX(-50%);
+      width: 260px;
+      height: 300px;
+    }
+
+    #room-scene.mobile-room #room-textbox {
+      min-height: 190px;
+      padding: 12px 20px 40px;
     }
 
     #room-textbox-name {
@@ -820,10 +834,11 @@ function scaleGame() {
 scaleGame();
 window.addEventListener('resize', scaleGame);
 
-// モバイルのみDパッド・決定ボタンを表示
+// モバイルのみDパッド・決定ボタン・お部屋レイアウト変更
 if (isMobile) {
   dpadEl.style.display   = 'block';
   enterBtn.style.display = 'block';
+  roomScene.classList.add('mobile-room');
 }
 
 // Dパッドのタッチ操作
