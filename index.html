@@ -304,11 +304,11 @@
       min-height: 130px;
     }
 
-    /* ===== モバイル: イラスト左端・下端をテキストに合わせ・背景contain ===== */
+    /* ===== モバイル: イラスト左端・下端をテキストに合わせ ===== */
     @media (max-width: 600px) {
-      /* 背景: 横幅全体に収めて全体表示 */
+      /* 背景: cover + 上寄せで黒帯なし */
       #room-bg {
-        background-size: contain;
+        background-size: cover;
         background-position: top center;
       }
 
@@ -316,15 +316,15 @@
       #room-chara {
         left: 0;
         transform: none;
-        bottom: 36vh;
+        bottom: 34vh;
         top: auto;
-        width: 44vw;
-        height: 52vh;
+        width: 42vw;
+        height: 56vh;
       }
 
-      /* テキストボックス: 下36vh分 */
+      /* テキストボックス: 下34vh */
       #room-textbox {
-        min-height: 36vh;
+        min-height: 34vh;
         padding: 12px 16px 50px;
       }
 
