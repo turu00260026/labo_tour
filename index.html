@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AIらぼ サロンツアー</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -10,17 +10,88 @@
     body {
       background: #1a1a2e;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+      touch-action: none;
+      overflow: hidden;
     }
 
     #game-wrapper {
       position: relative;
       width: 800px;
       height: 560px;
+      transform-origin: top center;
     }
+
+    /* ===== モバイルスケーリング ===== */
+    @media (max-width: 820px) {
+      body { justify-content: flex-start; padding-top: 8px; }
+    }
+
+    /* ===== 仮想Dパッド ===== */
+    #dpad {
+      display: none; /* JSで表示制御 */
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 100;
+      user-select: none;
+    }
+
+    .dpad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 52px);
+      grid-template-rows: repeat(3, 52px);
+      gap: 4px;
+    }
+
+    .dpad-btn {
+      width: 52px;
+      height: 52px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.1s;
+    }
+
+    .dpad-btn:active, .dpad-btn.pressed {
+      background: rgba(255,215,0,0.4);
+      border-color: #FFD700;
+    }
+
+    .dpad-empty { background: none; border: none; pointer-events: none; }
+
+    /* ===== 決定ボタン（モバイル） ===== */
+    #enter-btn {
+      display: none;
+      position: fixed;
+      bottom: 40px;
+      right: 24px;
+      z-index: 100;
+      width: 72px;
+      height: 72px;
+      background: rgba(255,215,0,0.25);
+      border: 3px solid #FFD700;
+      border-radius: 50%;
+      color: #FFD700;
+      font-size: 13px;
+      font-weight: bold;
+      font-family: inherit;
+      text-align: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #enter-btn:active { background: rgba(255,215,0,0.5); }
 
     /* ===== マップ ===== */
     #map {
@@ -441,6 +512,23 @@
   </div>
 </div>
 
+<!-- 仮想Dパッド（モバイル用） -->
+<div id="dpad">
+  <div class="dpad-grid">
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" id="btn-up">↑</div>
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" id="btn-left">←</div>
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" id="btn-right">→</div>
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" id="btn-down">↓</div>
+    <div class="dpad-empty"></div>
+  </div>
+</div>
+<!-- 決定ボタン（モバイル用） -->
+<button id="enter-btn">決定<br>／閉じる</button>
+
 <script>
 // ===== 設定 =====
 const PLAYER_SPEED = 3;
@@ -700,6 +788,49 @@ document.getElementById('start-btn').addEventListener('click', () => {
 endingScreen.addEventListener('click', () => {
   endingScreen.style.display = 'none';
 });
+
+// ===== モバイル対応 =====
+const dpadEl   = document.getElementById('dpad');
+const enterBtn = document.getElementById('enter-btn');
+const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// 画面スケーリング
+function scaleGame() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const scaleX = vw / 800;
+  const scaleY = vh / 560;
+  const scale  = Math.min(scaleX, scaleY, 1);
+  document.getElementById('game-wrapper').style.transform = `scale(${scale})`;
+}
+scaleGame();
+window.addEventListener('resize', scaleGame);
+
+// モバイルのみDパッド・決定ボタンを表示
+if (isMobile) {
+  dpadEl.style.display   = 'block';
+  enterBtn.style.display = 'block';
+}
+
+// Dパッドのタッチ操作
+function bindDpad(id, key) {
+  const btn = document.getElementById(id);
+  btn.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true;  btn.classList.add('pressed'); },    { passive: false });
+  btn.addEventListener('touchend',   e => { e.preventDefault(); keys[key] = false; btn.classList.remove('pressed'); }, { passive: false });
+  btn.addEventListener('touchcancel',e => { keys[key] = false; btn.classList.remove('pressed'); });
+}
+bindDpad('btn-up',    'ArrowUp');
+bindDpad('btn-down',  'ArrowDown');
+bindDpad('btn-left',  'ArrowLeft');
+bindDpad('btn-right', 'ArrowRight');
+
+// 決定ボタン
+enterBtn.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (!gameStarted) return;
+  if (dialogOpen) closeDialog();
+  else if (nearArea) openDialog(nearArea.id);
+}, { passive: false });
 
 // ===== ゲームループ =====
 function loop() {
