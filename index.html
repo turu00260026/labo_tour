@@ -304,28 +304,31 @@
       min-height: 130px;
     }
 
-    /* ===== モバイル: イラスト左端・下端をテキストに合わせ ===== */
+    /* ===== モバイル: 背景は全幅×70vw（800:560比率）で黒帯なし・全体表示 ===== */
     @media (max-width: 600px) {
-      /* 背景: cover + 上寄せで黒帯なし */
+      /* 背景: 全幅 × 画像縦横比(560/800=70vw)の高さで完全表示 */
       #room-bg {
-        background-size: cover;
-        background-position: top center;
+        top: 0; left: 0; right: 0; bottom: auto;
+        height: 70vw;
+        background-size: 100% 100%;
       }
 
-      /* イラスト: 左端寄せ・下端=テキストボックス上端 */
+      /* テキストボックス: 背景の下から画面下端まで */
+      #room-textbox {
+        top: 70vw;
+        bottom: 0; left: 0; right: 0;
+        min-height: 0;
+        padding: 12px 16px 50px;
+      }
+
+      /* イラスト: 左端寄せ・下端=テキストボックス上端(70vw) */
       #room-chara {
         left: 0;
         transform: none;
-        bottom: 34vh;
         top: auto;
+        bottom: calc(100% - 70vw);
         width: 42vw;
-        height: 56vh;
-      }
-
-      /* テキストボックス: 下34vh */
-      #room-textbox {
-        min-height: 34vh;
-        padding: 12px 16px 50px;
+        height: 52vw;
       }
 
       #room-textbox-name { font-size: 15px; }
