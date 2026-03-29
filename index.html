@@ -261,12 +261,14 @@
       overflow: hidden;
     }
 
-    /* 背景 */
+    /* 背景（デスクトップ: cover） */
     #room-bg {
       position: absolute;
       inset: 0;
       background-size: cover;
       background-position: center;
+      background-repeat: no-repeat;
+      background-color: #111;
     }
 
     /* りこさんイラスト */
@@ -302,26 +304,33 @@
       min-height: 130px;
     }
 
-    /* ===== モバイル: イラスト上・テキスト下 ===== */
-    @media (max-width: 600px), (max-height: 500px) {
+    /* ===== モバイル: イラスト左端・下端をテキストに合わせ・背景contain ===== */
+    @media (max-width: 600px) {
+      /* 背景: 横幅全体に収めて全体表示 */
+      #room-bg {
+        background-size: contain;
+        background-position: top center;
+      }
+
+      /* イラスト: 左端寄せ・下端=テキストボックス上端 */
       #room-chara {
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: auto;
-        top: 20px;
-        width: 50vw;
-        height: 45vh;
+        left: 0;
+        transform: none;
+        bottom: 36vh;
+        top: auto;
+        width: 44vw;
+        height: 52vh;
       }
 
+      /* テキストボックス: 下36vh分 */
       #room-textbox {
-        min-height: 38vh;
+        min-height: 36vh;
         padding: 12px 16px 50px;
-        font-size: 16px;
       }
 
-      #room-textbox-name { font-size: 16px; }
-      #room-textbox-text { font-size: 15px; line-height: 1.7; }
-      #room-textbox-next { font-size: 13px; }
+      #room-textbox-name { font-size: 15px; }
+      #room-textbox-text { font-size: 14px; line-height: 1.7; }
+      #room-textbox-next { font-size: 12px; }
     }
 
     #room-textbox-name {
@@ -733,8 +742,7 @@ function openDialog(areaId) {
   // 背景画像を設定
   roomBg.style.background = '';
   roomBg.style.backgroundImage = `url('${area.bgImage}')`;
-  roomBg.style.backgroundSize = 'cover';
-  roomBg.style.backgroundPosition = 'center';
+  // background-size/position はCSSで制御
 
   // テキストをセット
   roomTextEl.textContent = area.text;
