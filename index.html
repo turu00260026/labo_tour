@@ -252,19 +252,26 @@
       z-index: 15;
     }
 
-    /* ===== お部屋シーン（PC: game-wrapper内に収まる） ===== */
+    /* ===== お部屋シーン（PC: 中央800×560 / モバイル: フルスクリーン） ===== */
     #room-scene {
-      position: absolute;
-      inset: 0;
-      z-index: 40;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 560px;
+      z-index: 200;
       display: none;
       overflow: hidden;
     }
 
-    /* モバイルのみfullscreen */
-    #room-scene.mobile-fullscreen {
-      position: fixed;
-      z-index: 200;
+    @media (max-width: 600px) {
+      #room-scene {
+        top: 0; left: 0;
+        transform: none;
+        width: 100%;
+        height: 100%;
+      }
     }
 
     /* 背景（デスクトップ: cover） */
@@ -534,21 +541,6 @@
     <button id="start-btn">スタート</button>
   </div>
 
-  <!-- お部屋シーン（PC: game-wrapper内に収まる） -->
-  <div id="room-scene">
-    <div id="room-bg"></div>
-    <!-- ★ 素材差し替え: images/talk_riko.png -->
-    <div id="room-chara">
-      <img src="images/talk_riko.png" alt="りこさん"
-           onerror="this.style.display='none'; this.parentElement.textContent='👩'">
-    </div>
-    <div id="room-textbox">
-      <div id="room-textbox-name">りこさん</div>
-      <div id="room-textbox-text"></div>
-      <div id="room-textbox-next">▼ タップ / Enterで次へ</div>
-    </div>
-  </div>
-
   <!-- エンディング画面 -->
   <div id="ending-screen">
     <h2>🎉 ようこそ、AIらぼへ！</h2>
@@ -562,6 +554,20 @@
       一緒に楽しんでいきましょう！
     </p>
     <button id="replay-btn">もう一度遊ぶ</button>
+  </div>
+</div>
+
+<!-- お部屋シーン（game-wrapper外 / PCは中央800×560・モバイルはフルスクリーン） -->
+<div id="room-scene">
+  <div id="room-bg"></div>
+  <div id="room-chara">
+    <img src="images/talk_riko.png" alt="りこさん"
+         onerror="this.style.display='none'; this.parentElement.textContent='👩'">
+  </div>
+  <div id="room-textbox">
+    <div id="room-textbox-name">りこさん</div>
+    <div id="room-textbox-text"></div>
+    <div id="room-textbox-next">▼ タップ / Enterで次へ</div>
   </div>
 </div>
 
@@ -890,11 +896,10 @@ function scaleGame() {
 scaleGame();
 window.addEventListener('resize', scaleGame);
 
-// モバイルのみDパッド・決定ボタン・room-sceneをfullscreenに
+// モバイルのみDパッド・決定ボタンを表示
 if (isMobile) {
   dpadEl.style.display   = 'block';
   enterBtn.style.display = 'block';
-  roomScene.classList.add('mobile-fullscreen');
 }
 
 // Dパッドのタッチ操作
