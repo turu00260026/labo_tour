@@ -491,7 +491,7 @@
     <!-- 中央広場（ロック） -->
     <div class="building b-square locked" id="b-square" data-id="square" style="left:330px; top:220px;" data-cx="374" data-cy="284">
       <div class="building-icon">🔒</div>
-      <div class="building-label">中央広場<br>（全員訪問後解放）</div>
+      <div class="building-label">全部のお部屋<br>見学後開放</div>
     </div>
 
     <!-- プレイヤー（りこさん）フレームPNGで事前読み込み -->
@@ -766,6 +766,9 @@ function openDialog(areaId) {
   // テキストをセット
   roomTextEl.textContent = area.text;
 
+  // 中央広場のみりこさん非表示
+  document.getElementById('room-chara').style.visibility = areaId === 'square' ? 'hidden' : 'visible';
+
   // シーンを表示
   roomScene.style.display = 'block';
   hintEl.style.display = 'none';
@@ -789,7 +792,7 @@ function closeDialog() {
   if (isSquareUnlocked()) {
     squareEl.classList.remove('locked');
     squareEl.querySelector('.building-icon').textContent = '🌟';
-    squareEl.querySelector('.building-label').textContent = '中央広場';
+    squareEl.querySelector('.building-label').textContent = '';
     // ロック解除直後にnearAreaを即更新（プレイヤーが近くにいればヒントを即表示）
     nearArea = getNearestBuilding();
     updateHint(nearArea);
@@ -844,7 +847,7 @@ document.getElementById('replay-btn').addEventListener('click', e => {
   document.querySelectorAll('.building.visited').forEach(el => el.classList.remove('visited'));
   squareEl.classList.add('locked');
   squareEl.querySelector('.building-icon').textContent = '🔒';
-  squareEl.querySelector('.building-label').textContent = '中央広場\n（全員訪問後解放）';
+  squareEl.querySelector('.building-label').textContent = '全部のお部屋\n見学後開放';
   counterEl.textContent = '訪問: 0 / 9';
   renderPlayer();
 });
