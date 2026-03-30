@@ -430,6 +430,20 @@
       line-height: 1.8;
       max-width: 500px;
     }
+
+    #replay-btn {
+      margin-top: 24px;
+      background: #FFD700;
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 36px;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #replay-btn:hover { background: #FFC200; }
   </style>
 </head>
 <body>
@@ -518,13 +532,15 @@
   <div id="ending-screen">
     <h2>🎉 ようこそ、AIらぼへ！</h2>
     <p>
-      これで、AIらぼの全エリアを見学できたね。<br><br>
+      これで、AIらぼの主要エリアを見学できたね。<br>
+      他にもお部屋があるから、時間があるときにまわってみてね。<br><br>
       ここは、AI初心者のあなたが安心して<br>
       学んだり、発信したり、仲間と繋がれる場所。<br><br>
       まずは気軽に挨拶スタンプを押したり、<br>
       自己紹介を書いてみてね♪<br><br>
       一緒に楽しんでいきましょう！
     </p>
+    <button id="replay-btn">もう一度遊ぶ</button>
   </div>
 </div>
 
@@ -815,6 +831,24 @@ document.getElementById('start-btn').addEventListener('click', () => {
 });
 
 // エンディング画面クリック（再度クリックでリセット可能）
+// もう一度遊ぶボタン
+document.getElementById('replay-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  endingScreen.style.display = 'none';
+  // 状態をリセット
+  visitedAreas.clear();
+  player.x = 380; player.y = 290;
+  lastDir = 'dawn';
+  stopFrameLoop();
+  isMoving = false;
+  document.querySelectorAll('.building.visited').forEach(el => el.classList.remove('visited'));
+  squareEl.classList.add('locked');
+  squareEl.querySelector('.building-icon').textContent = '🔒';
+  squareEl.querySelector('.building-label').textContent = '中央広場\n（全員訪問後解放）';
+  counterEl.textContent = '訪問: 0 / 9';
+  renderPlayer();
+});
+
 endingScreen.addEventListener('click', () => {
   endingScreen.style.display = 'none';
 });
