@@ -252,21 +252,31 @@
       z-index: 15;
     }
 
-    /* ===== お部屋シーン（PC: 中央800×560 / モバイル: フルスクリーン） ===== */
+    /* ===== お部屋シーン（PC: フルスクリーン暗幕+中央800×560 / モバイル: フルスクリーン） ===== */
     #room-scene {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 800px;
-      height: 560px;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
       z-index: 200;
       display: none;
       overflow: hidden;
     }
 
+    /* PC: コンテンツを中央800×560に収める */
+    #room-inner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 560px;
+      overflow: hidden;
+    }
+
     @media (max-width: 600px) {
-      #room-scene {
+      #room-inner {
         top: 0; left: 0;
         transform: none;
         width: 100%;
@@ -557,17 +567,19 @@
   </div>
 </div>
 
-<!-- お部屋シーン（game-wrapper外 / PCは中央800×560・モバイルはフルスクリーン） -->
+<!-- お部屋シーン（game-wrapper外 / PCはフルスクリーン暗幕+中央800×560・モバイルはフルスクリーン） -->
 <div id="room-scene">
-  <div id="room-bg"></div>
-  <div id="room-chara">
-    <img src="images/talk_riko.png" alt="りこさん"
-         onerror="this.style.display='none'; this.parentElement.textContent='👩'">
-  </div>
-  <div id="room-textbox">
-    <div id="room-textbox-name">りこさん</div>
-    <div id="room-textbox-text"></div>
-    <div id="room-textbox-next">▼ タップ / Enterで次へ</div>
+  <div id="room-inner">
+    <div id="room-bg"></div>
+    <div id="room-chara">
+      <img src="images/talk_riko.png" alt="りこさん"
+           onerror="this.style.display='none'; this.parentElement.textContent='👩'">
+    </div>
+    <div id="room-textbox">
+      <div id="room-textbox-name">りこさん</div>
+      <div id="room-textbox-text"></div>
+      <div id="room-textbox-next">▼ タップ / Enterで次へ</div>
+    </div>
   </div>
 </div>
 
