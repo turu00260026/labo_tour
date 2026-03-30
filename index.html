@@ -412,6 +412,13 @@
       margin-bottom: 32px;
     }
 
+    #top-img {
+      max-width: 100%;
+      max-height: 420px;
+      object-fit: contain;
+      margin-bottom: 24px;
+    }
+
     #start-btn {
       background: #FFD700;
       color: #1a1a2e;
@@ -546,8 +553,8 @@
   <!-- お部屋シーン（建物入室時のフルスクリーン表示） -->
   <!-- タイトル画面 -->
   <div id="title-screen">
-    <h1>🏘 AIらぼ サロンツアー</h1>
-    <p>りこさんと一緒に、AIらぼの村を探検しよう！</p>
+    <img src="images/top.png" alt="AIらぼ サロンツアー" id="top-img"
+         onerror="this.style.display='none'">
     <button id="start-btn">スタート</button>
   </div>
 
